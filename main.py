@@ -72,12 +72,14 @@ def main():
     
     images, labels = load_data([apple_path, banana_path])
     
+    if not os.path.exists('model.h5'):
     
-    model = create_tensorflow_model()
-    
-    #training the model for 3 epochs, increase number if epochs for longer training
-    model.fit(images, labels, epochs=3, shuffle=True)
-    
+        model = create_tensorflow_model()
+        
+        #training the model for 3 epochs, increase number if epochs for longer training
+        model.fit(images, labels, epochs=3, shuffle=True)
+
+        model.save('model.h5')
     
     #pathes for testing data, should be different from training data for better evaluation
     
