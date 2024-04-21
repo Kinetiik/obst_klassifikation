@@ -26,13 +26,13 @@ def load_data(pathes):
     
     for i in os.listdir(apple_path):
         img = cv2.imread(apple_path + i)
-        img = cv2.resize(img, (480, 480))
+        img = cv2.resize(img, (480, 480))/255
         images.append(img)
         labels.append(0)
         
     for i in os.listdir(banana_path):
         img = cv2.imread(banana_path + i)
-        img = cv2.resize(img, (480, 480))
+        img = cv2.resize(img, (480, 480))/255
         images.append(img)
         labels.append(1)
     
@@ -47,20 +47,29 @@ def create_tensorflow_model():
     model = tf.keras.models.Sequential()
     
     #add layers to the model. Conv2D and MaxPooling2D layers are used for feature extraction from images
-    model.add(tf.keras.layers.Conv2D(32, (3, 3), activation = "relu", input_shape = (480, 480, 3)))
+    model.add(tf.keras.layers.Conv2D(64, (2, 2), input_shape = (480, 480, 3)))
     model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-    model.add(tf.keras.layers.Conv2D(16, (3, 3), activation = "relu"))
+    
+    model.add(tf.keras.layers.Conv2D(32, (2, 2)))
     model.add(tf.keras.layers.MaxPooling2D((2, 2)))
     
     #Flatten layer is used to convert 2D data to 1D data
     model.add(tf.keras.layers.Flatten())
     
+    
     #Dense layers are used for classification 
-    model.add(tf.keras.layers.Dense(8, activation = "relu"))
-    model.add(tf.keras.layers.Dense(1, activation = "sigmoid"))
+    model.add(tf.keras.layers.Dense(8, activation = "sigmoid"))
+    model.add(tf.keras.layers.Dense(1, activation = "softmax"))
+    
+    
+    #add regularization to each layer of the model to prevent overfitting
+    for layer in model.layers:
+        layer.kernel_regularizer = tf.keras.regularizers.l2(0.04)
+    
     
     #compiling the model with binary_crossentropy loss function
-    model.compile(loss = "binary_crossentropy")
+    model.compile(loss = "binary_crossentropy", optimizer = "adam", metrics = ["accuracy"])
+    
     
     return model
 
@@ -72,15 +81,18 @@ def main():
     
     images, labels = load_data([apple_path, banana_path])
     
-    if not os.path.exists('model.h5'):
+    if not os.path.exists('model.keras'):
     
         model = create_tensorflow_model()
         
         #training the model for 3 epochs, increase number if epochs for longer training
-        model.fit(images, labels, epochs=3, shuffle=True)
+        model.fit(images, labels, epochs=5, shuffle=True)
 
-        model.save('model.h5')
+        model.save('model.keras')
     
+    else:
+            
+        model = tf.keras.models.load_model('model.keras')
     #pathes for testing data, should be different from training data for better evaluation
     
     apple_path = 'data_testing/Apple/'
